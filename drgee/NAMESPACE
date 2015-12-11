@@ -1,4 +1,5 @@
 import("survival")
+import("data.table")
 importFrom("stats", glm.fit, model.matrix, terms, printCoefmat)
 importFrom("nleqslv", nleqslv)
 importFrom("Rcpp", sourceCpp)
@@ -9,7 +10,6 @@ export(drgee, coef.drgee, vcov.drgee, print.drgee, summary.drgee,
        drgeeData, summary.drgeeData, print.summary.drgeeData)
 
 S3method(coef, drgee)
-S3method(vcov, drgee)
 S3method(summary, drgee)
 S3method(print, drgee)
 S3method(summary, drgee)

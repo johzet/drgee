@@ -12,7 +12,7 @@ beta1 <- 1.5
 beta2 <- 2
 beta3 <- -0.5
 ## number of clusters
-m <- 500
+m <- 100000
 ## cluster sizes
 m.size <- rpois(m,1.5)+3
 ## m.size <- rep(5, m)
@@ -22,15 +22,39 @@ l1 <- rnorm(n, sd = 1)
 l2 <- rnorm(n, sd = 1)
 l3 <- rnorm(n, sd = 1)
 beta0 <- rep(rnorm(m, mean=0, sd=0.5), m.size)
-y <- rbinom(n, 1, p = expit(beta0 + l1 * beta1 + l2 * beta2 + l3) )
+y <- rbinom(n, 1, p = expit(beta0 + l1 * beta1 + l2 * beta2 ) )
 
-geefit <- gee(formula = y ~ l1 + l2, offset = l3, link = "logit", clusterid = "lopnr", cond = TRUE)
+simdata <- data.frame(lopnr, y, l1, l2, l3)
+
+setwd("c:/Users/johzet/Rwd/drgee")
+write.table(simdata, "simdata.dat")
+
+
+setwd("c:/Users/johzet/Rwd/drgee")
+simdata <- read.table("simdata.dat")
+
+####################################
+
+library(drgee)
+
+library(tictoc)
+
+tic()
+geefit <- gee(formula = y ~ l1 + l2, link = "logit",
+              clusterid = "lopnr", data = simdata, cond = TRUE)
+toc()
+
+vcov(geefit)
 ## geefit <- gee(formula = y ~ l1 + l2 + l3, link = "logit", clusterid = "lopnr", cond = TRUE)
 
+Rprof(gee(formula = y ~ l1 + l2, link = "logit",
+              clusterid = "lopnr", data = simdata, cond = TRUE) )
+
+
 tablex <- rbind(
-    geefit$time0, 
-    geefit$time1, 
-    geefit$time2, 
+    geefit$time0,
+    geefit$time1,
+    geefit$time2,
     geefit$time3)
 
 rownames(tablex) <- c("clogit", "Cpp-res", "R-res all", "R-res disc")
@@ -109,3 +133,32 @@ e.est <- drgee(outcome = "y", eformula = formula(a~l1+l2),
 iaformula = formula(~l1), elink="logit", data = simdata,
 estimation.method = "e")
 summary(e.est)
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+
+library(data.table)
+
+beta1 <- 1.5
+## number of clusters
+m <- 5
+## cluster sizes
+m.size <- rep(4, m)
+lopnr <- rep(1:m,times=m.size)
+n <- length(lopnr)
+l1 <- rnorm(n, sd = 1)
+beta0 <- rep(rnorm(m, mean=0, sd=0.5), m.size)
+y0 <- rbinom(n, 1, p = expit(beta0) )
+y1 <- rbinom(n, 1, p = expit(beta0 + beta1 * l1) )
+
+dt1 <- as.data.table(list(lopnr, t(cbind(y0, y1))))
+dt1
+
+setkey(dt1, lopnr)
+
+agg_sums <- dt1[, j = list( sum(y0), sum(y1)), by = lopnr]
+agg_sums <- dt1[, lapply(.SD, sum), by = lopnr]
+agg_sums
+as.matrix(agg_sums)
+as.matrix( agg_sums )[, -1]
