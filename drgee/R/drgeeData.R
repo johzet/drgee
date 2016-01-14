@@ -159,7 +159,6 @@ or a factor with two levels\n\n")
             }
         }
 
-
         if (!missing(eformula)) {
 
             eterms <- terms(eformula)
@@ -192,7 +191,6 @@ or a factor with two levels\n\n")
 
         ## Extract the exposure if it is given
         if (!missing(exposure)) {
-
 
             ## If the exposure is not given as a string
             ## get the name of the object that was given
@@ -229,7 +227,7 @@ or a factor with two levels\n\n")
             a <- a.all[, 2, drop = F]
 
             ## Update the column names if the outcome was not numeric
-            expname <- colnames(a)
+            a.names <- colnames(a)
 
             if ( nrow(a) != nobs) {
                 stop("The should be as many outcome as exposure observations\n\n")
@@ -246,6 +244,7 @@ or a factor with two levels\n\n")
 
         } else {
             a <- NULL
+            a.names <- NULL
         }
 
         if (!missing(iaformula)) {
@@ -326,6 +325,7 @@ or a factor with two levels\n\n")
         ## Extract observations for complete observations
         id <- as.factor(id[rows.to.use])
         y <- y[rows.to.use,, drop = F]
+        y.names <- colnames(y)
 
         if (!is.null(a)) {
             a <- a[rows.to.use,, drop = F]
@@ -334,14 +334,18 @@ or a factor with two levels\n\n")
         ## Extract covariates
         if (!is.null(oterms)) {
             v <- model.matrix(oterms, omf)[rows.to.use,, drop = F]
+            v.names <- colnames(v)
         } else {
             v <- NULL
+            v.names <- NULL
         }
 
         if (!is.null(eterms)) {
             z <- model.matrix(eterms, emf)[rows.to.use,, drop = F]
+            z.names <- colnames(z)
         } else {
             z <- NULL
+            z.names <- NULL
         }
 
         x <- matrix( rep(1, nobsnew), ncol = 1)
@@ -352,20 +356,28 @@ or a factor with two levels\n\n")
             }
         }
 
+        x.names <- colnames(x)
+        
         if (olink == "logit") {
+            yx.names <- rep("", ncol(x))
+            yx.names[1] <- y.names
+            yx.names[-1] <- paste(y.names, x.names[-1], sep = ":")
             yx <- x * as.vector(y)
-            colnames(yx)[1] <- colnames(y)
-            colnames(yx)[-1] <- paste(colnames(y), colnames(x)[-1], sep = ":")
+            dimnames(yx) <- list(rownames(yx), yx.names)
         } else {
             yx <- NULL
+            yx.names <- NULL
         }
 
         if (!is.null(a)) {
+            ax.names <- rep("", ncol(x))
+            ax.names[1] <- a.names
+            ax.names[-1] <- paste(a.names, x.names[-1], sep = ":")
             ax <- x * as.vector(a)
-            colnames(ax)[1] <- colnames(a)
-            colnames(ax)[-1] <- paste(colnames(a), colnames(x)[-1], sep = ":")
+            dimnames(ax) <- list(rownames(ax), ax.names)
         } else {
             ax <- NULL
+            ax.names <- NULL
         }
 
         ## Do not use an intercept for conditional methods
@@ -374,16 +386,21 @@ or a factor with two levels\n\n")
             if (!is.null(oterms)) {
                 if (length(attr(oterms, "term.labels"))>0 & attr(oterms,"intercept")) {
                     v <- v[, -1, drop = F]
+                    v.names = colnames(v)
                 } else {
                     v <- NULL
+                    v.names <- NULL
                 }
             }
 
             if (!is.null(eterms)) {
                 if (length(attr(eterms, "term.labels"))>0 & attr(eterms,"intercept")) {
                     z <- z[, -1, drop = F]
+                    z.names = colnames(z)
+
                 } else {
                     z <- NULL
+                    z.names <- NULL
                 }
             }
 
@@ -391,9 +408,7 @@ or a factor with two levels\n\n")
         }
 
         drgee.data <- list(y = y,
-                           outname = outname,
                            a = a,
-                           expname = expname,
                            x = x,
                            ax = ax,
                            v = v,
@@ -401,6 +416,13 @@ or a factor with two levels\n\n")
                            yx = yx,
                            id = id,
                            clustname = clustname,
+                           y.names = y.names, 
+                           a.names = a.names, 
+                           x.names = x.names, 
+                           ax.names = ax.names, 
+                           v.names = v.names, 
+                           z.names = z.names, 
+                           yx.names = yx.names, 
                            olink = olink,
                            elink = elink,
                            cond = cond, 
@@ -414,72 +436,70 @@ or a factor with two levels\n\n")
 summary.drgeeData <-
     function(object, ...) {
 
-        outcome <- colnames(object$y)
-        exposure <- colnames(object$a)
-        exposures.all <- colnames(object$ax)
-        covariates <- setdiff( union(colnames(object$v),colnames(object$z)),
+        covariates <- setdiff( union(object$v.names, object$z.names),
                               "(Intercept)" )
+        
         if(length(covariates) == 0) {
             covariates <- "None"
         }
 
         interactions <- colnames(object$x)
 
-        main.model <- paste(colnames(object$y), "~",
-                            paste(colnames(object$ax), collapse = " + "), sep = " ")
+        main.model <- paste(object$y.names, "~",
+                            paste(object$ax.names, collapse = " + "), sep = " ")
 
         if (object$cond) {
-            outcome.nuisance.model <- paste(colnames(object$y),"~",
-                                            paste(c(colnames(object$v)),
+            outcome.nuisance.model <- paste(object$y.names,"~",
+                                            paste(c(object$v.names),
                                                   collapse = " + "), sep = " ")
-            outcome.model <- paste(colnames(object$y),"~",
-                                   paste(c(colnames(object$ax), colnames(object$v)),
+            outcome.model <- paste(object$y.names,"~",
+                                   paste(c(object$ax.names, object$v.names),
                                          collapse = " + "), sep = " ")
 
         } else {
             if (!is.null(object$v)) {
-                outcome.nuisance.model <- paste(colnames(object$y),"~",
-                                                paste(c(colnames(object$v)[-1]),
+                outcome.nuisance.model <- paste(object$y.names,"~",
+                                                paste(c(object$v.names[-1]),
                                                       collapse = " + "), sep = " ")
             } else {
-                outcome.nuisance.model <- paste(colnames(object$y),"~ 1")
+                outcome.nuisance.model <- paste(object$y.names,"~ 1")
             }
 
-            outcome.model <- paste(colnames(object$y),"~",
-                                   paste(c(colnames(object$ax), colnames(object$v)[-1]),
+            outcome.model <- paste(object$ynames,"~",
+                                   paste(c(object$ax.names, object$v.names[-1]),
                                          collapse = " + "), sep = " ")
 
         }
 
         if (object$cond) {
-            exposure.nuisance.model <- paste(colnames(object$a),"~",
-                                             paste(colnames(object$z),
+            exposure.nuisance.model <- paste(object$a.names,"~",
+                                             paste(object$z.names,
                                                    collapse = " + "), sep = " ")
 
-            exposure.model <- paste(colnames(object$a),"~",
-                                    paste(c(colnames(object$yx), colnames(object$z)),
+            exposure.model <- paste(object$a.names,"~",
+                                    paste(c(object$yx.names, object$z.names),
                                           collapse = " + "), sep = " ")
 
         } else {
 
             if(!is.null(object$z)){
-                exposure.nuisance.model <- paste(colnames(object$a),"~",
-                                                 paste(colnames(object$z)[-1],
+                exposure.nuisance.model <- paste(object$a.anmes,"~",
+                                                 paste(object$z.names[-1],
                                                        collapse = " + "), sep = " ")
             } else {
-                exposure.nuisance.model <- paste(colnames(object$a),"~ 1")
+                exposure.nuisance.model <- paste(object$a.names,"~ 1")
             }
 
-            exposure.model <- paste(colnames(object$a),"~",
-                                    paste(c(colnames(object$yx), colnames(object$z)[-1]),
+            exposure.model <- paste(object$a.names,"~",
+                                    paste(c(object$yx.names, object$z.names[-1]),
                                           collapse = " + "), sep = " ")
 
         }
 
-        ans <- list(outcome = outcome,
-                    exposure = exposure,
+        ans <- list(outcome = object$y.names,
+                    exposure = object$a.names,
                     covariates = covariates,
-                    interactions = interactions,
+                    interactions = object$x.names,
                     main.model = main.model,
                     outcome.nuisance.model = outcome.nuisance.model,
                     outcome.model = outcome.model,
@@ -501,8 +521,8 @@ print.summary.drgeeData <-
     function(x, digits = max(3L, getOption("digits") -
                     3L), ...) {
 
-        cat("\nOutcome: ", colnames(x$outcome), "\nExposure: ", colnames(x$exposure),
-            "\nInteractions: ", paste(colnames(x$interactions), collapse = ", "))
+        cat("\nOutcome: ", x$outcome, "\nExposure: ", x$exposure,
+            "\nInteractions: ", paste(x$interactions, collapse = ", "))
 
         cat("\n\nMain model: ", x$main.model, "\nwith link function: ", x$olink)
 

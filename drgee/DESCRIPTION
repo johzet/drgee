@@ -2,7 +2,7 @@ Package: drgee
 Type: Package
 Title: Doubly Robust Generalized Estimating Equations
 Version: 1.1.4
-Date: 2015-11-28
+Date: 2016-01-13
 Author: Johan Zetterqvist <johan.zetterqvist@ki.se> , Arvid Sjölander <arvid.sjolander@ki.se> with contributions from Alexander Ploner.
 Maintainer: Johan Zetterqvist <johan.zetterqvist@ki.se>
 Description: Fit restricted mean models for the conditional association
@@ -14,9 +14,8 @@ Description: Fit restricted mean models for the conditional association
   estimation where both nuisance models are used. In DR-estimation,
   the estimates will be consistent when at least one of the nuisance
   models is correctly specified, not necessarily both.
-Depends: stats, nleqslv, survival, R (>= 3.0.0), Rcpp
+Depends: stats, nleqslv, survival, R (>= 3.0.0), Rcpp, data.table
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL-2 | GPL-3
 NeedsCompilation: yes
 Encoding: UTF-8
-Packaged: 2015-11-27 13:35:19 UTC; johan

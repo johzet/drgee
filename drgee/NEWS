@@ -1,11 +1,14 @@
-Changes in version 1.1.4 (2015-11-27)
+Changes in version 1.1.4 (2016-01-13)
+
+o In some data manipulation steps, the data.table 
+  package is used to obtain better speed.
 
 o For estimation in conditional logistic models
   only outcome-discordant clusters are used
 
 o Calculation of residuals for estimating equations
   for conditional logistic models implemented in C++
-  using the Rcpp and RcppArmadillo packages
+  using the Rcpp and RcppArmadillo packages. 
 
 o Drops unused levels for factor variables
 

@@ -119,5 +119,4 @@ RcppExport SEXP conditRes(SEXP thetahat, SEXP ysums, SEXP clustsizes, SEXP minid
   return List::create( Named("res") = res,
   		       Named("dres") = dres
   		      );
-
 }

@@ -38,7 +38,7 @@ gee <-
         }
 
         coefficients = fit$coefficients
-        names(coefficients) <- colnames(gee.data$v)
+        names(coefficients) <- gee.data$v.names
 
         u <- fit$eq.x * fit$res
 
@@ -46,13 +46,7 @@ gee <-
 
         vcov <- as.matrix( robVcov(u, d.u, gee.data$id) )
 
-        dimnames(vcov) <- list(names(coefficients), names(coefficients))
-
-        ## u2 <- fit$eq.x * fit$res2
-
-        ## d.u2 <- crossprod( fit$eq.x , fit$d.res2 ) / nrow(u2)
-        
-        ## vcov2 <- as.matrix( robVcov(u2, d.u2, gee.data$id) )
+        dimnames(vcov) <- list(gee.data$v.names, gee.data$v.names)
 
         result <- list(coefficients = coefficients,
                        vcov = vcov,

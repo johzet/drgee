@@ -1,7 +1,8 @@
 import("survival")
-importFrom("stats", glm.fit, model.matrix, terms, printCoefmat)
-importFrom("nleqslv", nleqslv)
-importFrom("Rcpp", sourceCpp)
+import("data.table")
+importFrom("stats", "coef", "cov", "vcov", "formula", "gaussian", "model.frame", "na.pass", "pnorm", "quasibinomial", "quasipoisson", "glm.fit", "model.matrix", "terms", "printCoefmat")
+importFrom("nleqslv", "nleqslv")
+importFrom("Rcpp", "sourceCpp")
 
 export(drgee, coef.drgee, vcov.drgee, print.drgee, summary.drgee,
        print.summary.drgee, gee, coef.gee, vcov.gee, print.gee, summary.gee,

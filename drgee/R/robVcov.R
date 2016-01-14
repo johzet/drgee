@@ -23,12 +23,14 @@ robVcov <-
             if (is.null(id) | n.clust == n.obs) {
                 correction.term <- 1 / n.obs
             } else {
+                
                 ## If data is clustered we use the clustersums of u
                 ## and divide by the number of clusters
-                ## u <- apply(u, 2, function(x) tapply(x, as.factor(id), sum))
-                u <- .Call("tapplysum", u, id, PACKAGE = "drgee")
+                u.dt <- as.data.table(cbind(id, u))
+                setkey(u.dt, id)
+                u <- as.matrix( u.dt[, lapply(.SD, sum), by = id] )[, -1]
 
-                correction.term <- length(unique(id)) / length(id)^2
+                correction.term <- n.clust / n.obs^2
             }
 
             vcov <- inv.d.u %*% cov(u) %*% t(inv.d.u) * correction.term
